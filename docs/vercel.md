@@ -13,11 +13,13 @@ The original `zprint.main:app` is a persistent service: it writes a database/doc
 
 ## Connect printing services
 
+The prepared [Render Blueprint](render.md) runs these persistent components together for the hosted simulation. It additionally requires `ZPRINT_BACKEND_GATEWAY_KEY` on Vercel to match Render's generated `ZPRINT_GATEWAY_KEY`. This server-side key gates access to the backend; it does not replace student/admin/agent authorization.
+
 Run the backend with a persistent document volume, PostgreSQL, migrations, seed and retention service on a persistent host. Run the print agent on the station PC with outbound access to that backend. The existing Docker Compose setup describes these components, but its API is deliberately bound to localhost; do not expose it unchanged as a public service. Complete the deployment/security gate before public user traffic, including document sandbox hardening and replacing the published development keys. Use a protected staging backend for hosted demo testing.
 
-Set the Vercel environment variable `ZPRINT_BACKEND_URL` to the backend's **HTTPS origin**, such as `https://your-backend.example` (illustration only; no service is provisioned at that address), then redeploy. Do not include `/api/v1`, credentials, query parameters or the Vercel portal's own URL. The backend must be reachable from Vercel with the credentials already provided by the client/agent. The gateway does not add a privileged credential or bypass backend authentication.
+Set the Vercel environment variable `ZPRINT_BACKEND_URL` to the backend's **HTTPS origin**, such as `https://your-backend.example` (illustration only; no service is provisioned at that address), then redeploy. Do not include `/api/v1`, credentials, query parameters or the Vercel portal's own URL. The backend must be reachable from Vercel. The gateway adds its configured server-side gateway key, but never adds an admin/agent credential or bypasses student authorization.
 
-The portal forwards `/api/v1/*` to that fixed backend. It preserves student tokens, explicitly supplied admin/agent/signature headers, request bytes and response status. It does not forward browser cookies or follow upstream redirects. Configure agent/provider callback URLs directly against the persistent backend where possible. Never point the agent at localhost on Vercel.
+The portal forwards `/api/v1/*` to that fixed backend. It preserves student tokens, explicitly supplied admin/agent/signature headers, request bytes and response status. It does not forward browser cookies or follow upstream redirects. The hosted agent includes its gateway key on direct calls. Live provider callbacks need their own authenticated ingress design; they cannot currently bypass the gateway gate. Never point the agent at localhost on Vercel.
 
 Vercel has a 4.5 MB function request/response limit. The hosted UI caps PDF uploads at **3 MiB**, leaving multipart overhead room; the gateway bounds request and response buffering. The native backend portal retains its 20 MiB upload limit. Full-sized remote upload/preview support requires a private object-storage upload/download design in a later phase.
 

@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import os
 import secrets
 import time
 from collections import defaultdict, deque
@@ -45,6 +46,8 @@ def create_app(settings=None):
     async def basic_limits(request, call_next):
         # One-process development limiter. Production needs shared per-session/IP limits.
         if request.url.path.startswith("/api/"):
+            if cfg.gateway_key and not hmac.compare_digest(request.headers.get("x-zprint-gateway-key", ""), cfg.gateway_key):
+                return JSONResponse({"detail": "Backend gateway authentication required"}, 401, headers={"Cache-Control": "no-store"})
             key = request.client.host if request.client else "local"
             with bucket_lock:
                 current = time.monotonic()
@@ -450,7 +453,7 @@ def create_app(settings=None):
     def pricing(db=Depends(db_session)):
         return [public(t, "mode", "min_sides", "max_sides", "rate_ugx", "version") for t in db.scalars(select(Tier).where(Tier.active.is_(True))).all()]
 
-    portal = Path(__file__).resolve().parents[3] / "apps" / "student-portal"
+    portal = Path(os.getenv("ZPRINT_PROJECT_ROOT", str(Path(__file__).resolve().parents[3]))) / "apps" / "student-portal"
     if portal.exists():
         app.mount("/", StaticFiles(directory=portal, html=True), name="demo-portal")
     return app

@@ -1,5 +1,15 @@
 # Phase 1 validation — 27 October 2026
 
+## Hosted backend preparation — 3 November 2026
+
+- 55 tests pass after adding the Render backend configuration and gateway authentication.
+- New integration test runs upload, quote, mock payment settlement/reconciliation, agent dispatch and completion through the Vercel proxy into the real test backend.
+- Tests cover generated-secret requirements, refusal of hosted SQLite/default keys, PostgreSQL URL normalization, direct-backend access gating, server-only gateway key injection and process-manager child shutdown.
+- Python compilation and Git whitespace validation pass.
+- Render provisioning, Docker image execution and live PostgreSQL connectivity have not been verified in this environment. The Render/Vercel connections and an approved resource quote are required before claiming hosted backend completion.
+
+## Original foundation checks
+
 Executed on Windows, Python 3.12, native SQLite:
 
 - 26 integration/agent tests passed after the event-order correction.

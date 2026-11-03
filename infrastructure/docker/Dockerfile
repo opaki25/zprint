@@ -1,5 +1,6 @@
 FROM python:3.12-slim
 WORKDIR /app
+ENV ZPRINT_PROJECT_ROOT=/app
 COPY pyproject.toml ./
 COPY services ./services
 RUN pip install --no-cache-dir . && useradd --create-home --uid 10001 zprint

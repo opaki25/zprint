@@ -17,6 +17,8 @@ def result(response):
 
 
 with httpx.Client(base_url=os.getenv('ZPRINT_API_URL','http://127.0.0.1:8000'),timeout=30) as client:
+    if os.getenv('ZPRINT_GATEWAY_KEY'):
+        client.headers['X-Zprint-Gateway-Key'] = os.environ['ZPRINT_GATEWAY_KEY']
     session=result(client.post('/api/v1/sessions',json={'station_code':'ST001'}))
     client.headers['Authorization']='Bearer '+session['token']
     doc=result(client.post('/api/v1/documents',files={'file':('demo.pdf',buffer.getvalue(),'application/pdf')}))

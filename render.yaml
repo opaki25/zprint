@@ -1,0 +1,52 @@
+# Paid staging/demo resources. Review the Render quote before provisioning.
+# One service shares its persistent disk with the supervised fake printer and retention worker.
+services:
+  - type: web
+    name: zprint-backend
+    runtime: docker
+    repo: https://github.com/opaki25/zprint
+    branch: main
+    region: frankfurt
+    plan: 1c-2g
+    dockerfilePath: infrastructure/docker/Dockerfile
+    dockerContext: .
+    dockerCommand: python -m zprint.hosted
+    healthCheckPath: /health
+    disk:
+      name: zprint-documents-and-agent
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zprint-db
+          property: connectionString
+      - key: ZPRINT_DATA_DIR
+        value: /data/documents
+      - key: ZPRINT_AGENT_DIR
+        value: /data/agent
+      - key: ZPRINT_HOSTED
+        value: "true"
+      - key: ZPRINT_DEMO
+        value: "true"
+      - key: ZPRINT_STATION
+        value: ST001
+      - key: ZPRINT_ADMIN_KEY
+        generateValue: true
+      - key: ZPRINT_AGENT_KEY
+        generateValue: true
+      - key: ZPRINT_WEBHOOK_SECRET
+        generateValue: true
+      - key: ZPRINT_GATEWAY_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: "1"
+databases:
+  - name: zprint-db
+    region: frankfurt
+    plan: 0.1c-256mb
+    databaseName: zprint
+    user: zprint
+    postgresMajorVersion: "16"
+    diskSizeGB: 1
+    ipAllowList: []

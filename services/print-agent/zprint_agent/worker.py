@@ -127,7 +127,8 @@ def main():
         import fcntl
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     with httpx.Client(base_url=os.getenv("ZPRINT_API_URL", "http://127.0.0.1:8000"),
-                      headers={"X-Agent-Key": os.getenv("ZPRINT_AGENT_KEY", "local-demo-agent-change-me")}, timeout=30) as client:
+                      headers={"X-Agent-Key": os.getenv("ZPRINT_AGENT_KEY", "local-demo-agent-change-me"),
+                               "X-Zprint-Gateway-Key": os.getenv("ZPRINT_GATEWAY_KEY", "")}, timeout=30) as client:
         worker = AgentWorker(client, directory)
         try:
             while True:

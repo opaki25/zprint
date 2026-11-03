@@ -18,8 +18,9 @@ RESPONSE_LIMIT = 4 * 1024 * 1024
 SETUP_MESSAGE = "Portal preview only. Connect the persistent Z-PRINT backend before uploading or printing."
 
 
-def create_portal(backend_url=None, transport=None):
+def create_portal(backend_url=None, transport=None, gateway_key=None):
     upstream = (backend_url if backend_url is not None else os.getenv("ZPRINT_BACKEND_URL", "")).strip().rstrip("/")
+    gateway_key = gateway_key if gateway_key is not None else os.getenv("ZPRINT_BACKEND_GATEWAY_KEY", "")
     parsed = urlsplit(upstream)
     configured = bool(parsed.scheme == "https" and parsed.hostname and not parsed.username and not parsed.password
                       and not parsed.path and not parsed.query and not parsed.fragment)
@@ -63,6 +64,9 @@ def create_portal(backend_url=None, transport=None):
         forwarded = {name: request.headers[name] for name in (
             "authorization", "content-type", "x-admin-key", "x-agent-key", "x-signature", "idempotency-key"
         ) if name in request.headers}
+        if gateway_key:
+            # Deployment secret, never supplied by browser JavaScript or reflected in responses.
+            forwarded["x-zprint-gateway-key"] = gateway_key
         try:
             async with httpx.AsyncClient(transport=transport, timeout=30, follow_redirects=False) as client:
                 async with client.stream(request.method, upstream + "/api/v1/" + path,

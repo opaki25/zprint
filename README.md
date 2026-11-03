@@ -8,6 +8,8 @@ Phase 1 of the Z-PRINT Development Blueprint v1.0 (27 October 2026). A runnable,
 
 **Deploying on Vercel?** See [Vercel setup](docs/vercel.md). The repository declares a dedicated stateless portal entrypoint. It displays a preview until `ZPRINT_BACKEND_URL` points to a persistent backend; Vercel does not run this checkout's local database, document store or station agent.
 
+**Add the hosted backend:** [Render deployment](docs/render.md) and `render.yaml` provide PostgreSQL, persistent documents, automatic migrations, retention and a supervised simulated print agent. Paid resources require review before provisioning. Connect it to Vercel using `ZPRINT_BACKEND_URL` and `ZPRINT_BACKEND_GATEWAY_KEY`.
+
 Requires Docker Engine/Desktop with Compose v2. From the repository root:
 
 ```sh
