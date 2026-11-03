@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: zprint
+      POSTGRES_PASSWORD: local-demo-db-password
+      POSTGRES_DB: zprint
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zprint"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  migrate:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile
+    environment: &backend-env
+      DATABASE_URL: postgresql+psycopg://zprint:local-demo-db-password@postgres/zprint
+      ZPRINT_DATA_DIR: /data
+      ZPRINT_DEMO: "true"
+      ZPRINT_ADMIN_KEY: ${ZPRINT_ADMIN_KEY:-local-demo-admin-change-me}
+      ZPRINT_AGENT_KEY: ${ZPRINT_AGENT_KEY:-local-demo-agent-change-me}
+      ZPRINT_WEBHOOK_SECRET: ${ZPRINT_WEBHOOK_SECRET:-local-demo-webhook-change-me}
+    command: ["sh", "-c", "alembic upgrade head && python -m zprint.seed"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile
+    environment: *backend-env
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: ["documents:/data"]
+    mem_limit: 768m
+    cpus: 1.5
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  agent:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile
+    environment:
+      ZPRINT_API_URL: http://backend:8000
+      ZPRINT_AGENT_DIR: /agent
+      ZPRINT_AGENT_KEY: ${ZPRINT_AGENT_KEY:-local-demo-agent-change-me}
+    command: ["python", "-m", "zprint_agent.worker"]
+    volumes: ["agent:/agent"]
+    restart: unless-stopped
+    mem_limit: 512m
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    depends_on:
+      backend:
+        condition: service_healthy
+  retention:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile
+    environment: *backend-env
+    command: ["python", "-m", "zprint.maintenance"]
+    volumes: ["documents:/data"]
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+volumes:
+  postgres:
+  documents:
+  agent:
