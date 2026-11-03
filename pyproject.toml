@@ -21,4 +21,7 @@ where = ["services/backend-api", "services/print-agent", "services/document-proc
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["services/backend-api", "services/print-agent", "services/document-processor", "services/payment-service"]
+pythonpath = [".", "services/backend-api", "services/print-agent", "services/document-processor", "services/payment-service"]
+
+[tool.vercel]
+entrypoint = "vercel_app:app"

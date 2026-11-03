@@ -153,6 +153,11 @@ def create_app(settings=None):
         db.execute(select(Station.id).limit(1))
         return {"status": "ok", "mode": "SIMULATION", "real_money": False, "real_printer": False}
 
+    @app.get("/deployment.json")
+    def deployment():
+        return {"hosting": "persistent-backend", "backend_configured": True,
+                "max_upload_bytes": cfg.max_upload, "message": "Simulation workspace — no real payment is collected. Prices are illustrative."}
+
     @app.get("/api/v1/stations/{code}")
     def station_info(code: str, db=Depends(db_session)):
         station = station_by_code(db, code)

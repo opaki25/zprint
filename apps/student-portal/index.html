@@ -5,10 +5,10 @@
 <header><a class="brand" href="/">Z<span>—</span>PRINT<span class="dot">.</span></a><span class="pill">PHASE 01 / DEMO</span></header>
 <main>
   <section class="intro"><div><p class="eyebrow">YOUR CAMPUS. YOUR PRINT STATION.</p><h1>Less waiting.<br>More doing.</h1><p class="lead">Upload your document, choose your settings,<br>and leave the rest to Z-PRINT.</p></div><aside class="station"><span class="eyebrow">CONNECTED STATION</span><h2 id="station-name">ST001</h2><p id="station-state">Checking availability…</p><div class="station-line"></div><p>A4 · Black & white · Duplex</p><small>Simulated printer · No physical output</small></aside></section>
-  <div class="notice">Simulation workspace — no real payment is collected. Prices are illustrative.</div>
+  <div class="notice" id="deployment-notice" role="status">Simulation workspace — no real payment is collected. Prices are illustrative.</div>
   <div class="workspace">
     <section class="card"><div class="section-title"><span class="number">01</span><h2>Your document</h2></div>
-      <label class="upload" for="file"><span class="file-icon">↑</span><strong>Choose a PDF to get started</strong><span>PDF only · Up to 20 MB / 500 pages</span><input id="file" type="file" accept="application/pdf,.pdf"></label>
+      <label class="upload" for="file"><span class="file-icon">↑</span><strong>Choose a PDF to get started</strong><span id="upload-limit">PDF only · Up to 20 MiB / 500 pages</span><input id="file" type="file" accept="application/pdf,.pdf" disabled></label>
       <p id="document-info" class="muted">Your file is private to this session and automatically deleted within 24 hours.</p>
       <button id="preview" class="subtle" disabled>Open private preview</button>
       <div class="section-title settings-title"><span class="number">02</span><h2>Make it yours</h2></div>

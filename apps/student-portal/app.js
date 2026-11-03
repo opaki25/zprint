@@ -2,26 +2,42 @@ const $ = id => document.getElementById(id);
 const state = {token: sessionStorage.getItem('zprint-token'), document: null, quote: null, job: sessionStorage.getItem('zprint-job'), payment: sessionStorage.getItem('zprint-payment'), preview: null};
 const station = new URLSearchParams(location.search).get('station') || 'ST001';
 const money = n => new Intl.NumberFormat('en-UG').format(n);
+let maxUploadBytes = 20 * 1024 * 1024;
 async function api(path, {method='GET', body, admin=false}={}) {
   const headers = {};
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   if (admin) headers['X-Admin-Key'] = $('admin-key').value;
   if (body && !(body instanceof FormData)) {headers['Content-Type'] = 'application/json'; body = JSON.stringify(body);}
   const response = await fetch(`/api/v1${path}`, {method, headers, body});
-  if (!response.ok) {const error = await response.json(); throw new Error(typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail));}
+  if (!response.ok) {const error = await response.json().catch(()=>({detail:`Request failed (${response.status}). Please try again.`})); throw new Error(typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail));}
   return response;
 }
 function handle(fn) {return async () => { $('error').textContent = ''; try {await fn();} catch(e) {$('error').textContent = e.message;} };}
 function invalidate() {state.quote = null; $('pay').disabled = true; $('total').textContent = '— UGX'; $('breakdown').textContent = 'Calculate a new quote for these settings.';}
 async function init() {
+  const response = await fetch('/deployment.json');
+  if (!response.ok) throw new Error('Could not read portal configuration. Reload to try again.');
+  const deployment = await response.json();
+  maxUploadBytes = deployment.max_upload_bytes;
+  $('deployment-notice').textContent = deployment.message;
+  $('upload-limit').textContent = `PDF only · Up to ${maxUploadBytes / 1024 / 1024} MiB / 500 pages`;
+  if (!deployment.backend_configured) {
+    $('station-state').textContent = 'Backend not connected';
+    $('status').textContent = 'Portal preview';
+    $('message').textContent = 'Printing becomes available after the backend is connected.';
+    state.job = null;
+    return;
+  }
   const info = await (await api(`/stations/${encodeURIComponent(station)}`)).json();
   $('station-name').textContent = info.code;
   $('station-state').textContent = `${info.readiness === 'READY' ? '● Ready to print' : '○ Agent not ready'} · ${info.name}`;
   if (!state.token) {const s = await (await api('/sessions', {method:'POST', body:{station_code:station}})).json(); state.token = s.token; sessionStorage.setItem('zprint-token', s.token);}
+  $('file').disabled = false;
   if (state.job) await poll();
 }
 $('file').addEventListener('change', handle(async () => {
   if (!$('file').files[0]) return;
+  if ($('file').files[0].size > maxUploadBytes) throw new Error(`This portal accepts PDFs up to ${maxUploadBytes / 1024 / 1024} MiB.`);
   invalidate(); $('quote').disabled = true;
   $('document-info').textContent = 'Validating PDF and counting pages…';
   const form = new FormData(); form.append('file', $('file').files[0]);

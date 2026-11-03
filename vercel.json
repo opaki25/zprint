@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "functions": {
+    "vercel_app.py": {
+      "includeFiles": "apps/student-portal/**",
+      "maxDuration": 60
+    }
+  }
+}
