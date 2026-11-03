@@ -197,7 +197,7 @@ def create_app(settings=None):
                         raise HTTPException(413, "PDF exceeds 20 MiB")
                     output.write(chunk)
             try:
-                pages, digest = process_pdf(source, target, cfg.max_pages)
+                pages, digest, warnings = process_pdf(source, target, cfg.max_pages)
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
             doc = Document(id=identifier, station_id=session.station_id, owner_session_id=session.id, storage_key=target.name,
@@ -205,7 +205,7 @@ def create_app(settings=None):
                            page_count=pages, expires_at=now() + cfg.retention_seconds)
             db.add(doc)
             db.commit()
-            return public(doc, "id", "original_name", "page_count", "sha256", "expires_at")
+            return public(doc, "id", "original_name", "page_count", "sha256", "expires_at") | {"warnings": warnings}
         except Exception:
             target.unlink(missing_ok=True)
             raise

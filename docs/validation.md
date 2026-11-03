@@ -1,5 +1,13 @@
 # Phase 1 validation — 27 October 2026
 
+## PDF upload correction — 3 November 2026
+
+- 62 Python tests and 2 JavaScript upload-state tests pass.
+- Reproduced rejection of a 19-page lecture PDF with six ordinary URI link annotations. Ordinary URI/internal links are now removed before cloning pages; scripts, action chains and unsupported visible annotations remain blocked.
+- The user's document was accepted by the running local API (201). All 19 page content streams and extracted text remained unchanged after normalization. Two duplex copies quote 38 sides, 20 sheets and UGX 7,600.
+- Failed uploads now clear stale document/preview state, stop displaying “Validating,” show a specific reason and allow selecting the same file again. Successful uploads disclose link removal.
+- The user's source PDF and normalized test copy are not committed to Git.
+
 ## Hosted backend preparation — 3 November 2026
 
 - 55 tests pass after adding the Render backend configuration and gateway authentication.

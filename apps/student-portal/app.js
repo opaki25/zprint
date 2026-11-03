@@ -36,14 +36,26 @@ async function init() {
   if (state.job) await poll();
 }
 $('file').addEventListener('change', handle(async () => {
-  if (!$('file').files[0]) return;
-  if ($('file').files[0].size > maxUploadBytes) throw new Error(`This portal accepts PDFs up to ${maxUploadBytes / 1024 / 1024} MiB.`);
-  invalidate(); $('quote').disabled = true;
+  const file = $('file').files[0];
+  if (!file) return;
+  invalidate(); state.document = null;
+  $('quote').disabled = true; $('preview').disabled = true;
+  if (state.preview) { URL.revokeObjectURL(state.preview); state.preview = null; }
+  $('file').disabled = true;
   $('document-info').textContent = 'Validating PDF and counting pages…';
-  const form = new FormData(); form.append('file', $('file').files[0]);
-  state.document = await (await api('/documents', {method:'POST', body:form})).json();
-  $('document-info').textContent = `${state.document.original_name} · ${state.document.page_count} pages · securely processed`;
-  $('quote').disabled = false; $('preview').disabled = false;
+  try {
+    if (file.size > maxUploadBytes) throw new Error(`This portal accepts PDFs up to ${maxUploadBytes / 1024 / 1024} MiB.`);
+    const form = new FormData(); form.append('file', file);
+    state.document = await (await api('/documents', {method:'POST', body:form})).json();
+    $('document-info').textContent = `${state.document.original_name} · ${state.document.page_count} pages · ready. ${(state.document.warnings || []).join(' ')}`;
+    $('quote').disabled = false; $('preview').disabled = false;
+  } catch (error) {
+    $('document-info').textContent = `Upload failed. ${error.message}`;
+    throw error;
+  } finally {
+    $('file').disabled = false;
+    $('file').value = ''; // Selecting the same file again must trigger a fresh upload.
+  }
 }));
 for (const id of ['copies','pages','mode','duplex']) $(id).addEventListener('input', invalidate);
 $('preview').addEventListener('click', handle(async () => {
